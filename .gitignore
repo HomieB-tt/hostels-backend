@@ -1,0 +1,7 @@
+node_modules
+dist
+.env
+*.log
+# NOTE: ./drizzle (generated migration SQL) is intentionally NOT
+# ignored — those files should be committed and reviewed like any
+# other schema change.

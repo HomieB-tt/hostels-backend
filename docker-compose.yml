@@ -1,0 +1,75 @@
+name: hostel-platform-backend
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: hostel_platform
+      POSTGRES_USER: hostel_platform
+      POSTGRES_PASSWORD: hostel_platform_dev_password
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./docker/postgres/init.sql:/docker-entrypoint-initdb.d/init.sql:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U hostel_platform -d hostel_platform"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  # Official Upstash local dev server (public.ecr.aws/upstash/qstash) —
+  # mimics the real QStash API with deterministic test credentials so
+  # signature verification and delayed job delivery work fully offline,
+  # without a tunnel to the hosted service. Not for production use — see
+  # https://upstash.com/docs/qstash/howto/local-development
+  qstash-dev:
+    image: public.ecr.aws/upstash/qstash:latest
+    restart: unless-stopped
+    command: ["qstash", "dev"]
+    ports:
+      - "8085:8080" # host:container — poke at it directly if needed
+
+  # One-off: syncs the schema straight to postgres (drizzle-kit push) then
+  # seeds test data. Runs to completion; `app` waits for it to exit 0.
+  # For anything beyond local dev, use `npm run db:generate` +
+  # `npm run db:migrate` (reviewed SQL) instead of push.
+  migrate:
+    build:
+      context: .
+      target: dev
+    env_file: .env
+    environment:
+      SUPABASE_DATABASE_URL: postgres://hostel_platform:hostel_platform_dev_password@postgres:5432/hostel_platform
+    depends_on:
+      postgres:
+        condition: service_healthy
+    command: ["sh", "-c", "npx drizzle-kit push --force && npm run db:seed"]
+
+  app:
+    build:
+      context: .
+      target: build
+    restart: unless-stopped
+    env_file: .env
+    environment:
+      NODE_ENV: development
+      PORT: "8080"
+      SUPABASE_DATABASE_URL: postgres://hostel_platform:hostel_platform_dev_password@postgres:5432/hostel_platform
+      QSTASH_URL: http://qstash-dev:8080
+      # These three come from qstash-dev's fixed dev credentials — see
+      # .env.example for the values and where they're documented.
+    ports:
+      - "8080:8080"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      qstash-dev:
+        condition: service_started
+      migrate:
+        condition: service_completed_successfully
+    command: ["node", "dist/server.js"]
+
+volumes:
+  postgres_data:
