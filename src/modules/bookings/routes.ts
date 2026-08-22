@@ -1,6 +1,7 @@
 import type { FastifyInstance } from "fastify";
 import { z } from "zod";
 import { createBookingHold, BedUnavailableError } from "./service.js";
+import { env } from "../../env.js";
 
 const holdBodySchema = z.object({
   bedId: z.string().uuid(),
@@ -41,7 +42,7 @@ export default async function bookingRoutes(app: FastifyInstance) {
           stayEnd: parsed.data.stayEnd,
           totalAmount: parsed.data.totalAmount,
           ipAddress: req.ip,
-          jobsBaseUrl: `${req.protocol}://${req.hostname}/api/v1/jobs`,
+          jobsBaseUrl: `${env.APP_BASE_URL}/api/v1/jobs`,
         });
 
         return reply.code(201).send({

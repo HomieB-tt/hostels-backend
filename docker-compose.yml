@@ -54,6 +54,7 @@ services:
     restart: unless-stopped
     env_file: .env
     environment:
+      APP_BASE_URL: http://app:8080
       NODE_ENV: development
       PORT: "8080"
       SUPABASE_DATABASE_URL: postgres://hostel_platform:hostel_platform_dev_password@postgres:5432/hostel_platform

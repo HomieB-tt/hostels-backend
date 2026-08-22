@@ -18,6 +18,7 @@ const nonEmpty = (label: string) =>
 export const env = parseEnv(process.env, {
   NODE_ENV: z.enum(["development", "test", "production"]),
   PORT: z.coerce.number().int().positive().default(8080),
+  APP_BASE_URL: nonEmpty("APP_BASE_URL").url(),
 
   // --- Database (Supabase Postgres, RLS enabled) ---
   SUPABASE_DATABASE_URL: nonEmpty("SUPABASE_DATABASE_URL").url(),
