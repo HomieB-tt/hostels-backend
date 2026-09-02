@@ -18,6 +18,12 @@ const nonEmpty = (label: string) =>
 export const env = parseEnv(process.env, {
   NODE_ENV: z.enum(["development", "test", "production"]),
   PORT: z.coerce.number().int().positive().default(8080),
+
+  // The URL QStash (or anything else acting as a callback client) should
+  // use to reach THIS server — not derived from any inbound request's
+  // Host header, which reflects the caller's vantage point, not the
+  // callback sender's. In docker-compose this is the internal service
+  // name (http://app:8080); in production it's the real public HTTPS URL.
   APP_BASE_URL: nonEmpty("APP_BASE_URL").url(),
 
   // --- Database (Supabase Postgres, RLS enabled) ---
@@ -30,6 +36,8 @@ export const env = parseEnv(process.env, {
   JWT_ACCESS_SECRET: nonEmpty("JWT_ACCESS_SECRET").min(32),
   JWT_REFRESH_SECRET: nonEmpty("JWT_REFRESH_SECRET").min(32),
   JWT_ACCESS_TTL_WEB: z.string().default("15m"),
+  JWT_ACCESS_TTL_MOBILE: z.string().default("12h"),
+  JWT_REFRESH_TTL_WEB: z.string().default("7d"),
   JWT_REFRESH_TTL_MOBILE: z.string().default("90d"),
 
   // --- QStash (background job signing) ---

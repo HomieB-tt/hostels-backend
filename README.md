@@ -69,6 +69,28 @@ This starts, in order:
    a sandbox mobile-money/card payment through Pesapal's checkout so a
    real `orderTrackingId` exists to verify.
 
+## Row Level Security (Supabase only — not local docker-compose)
+
+`supabase/rls-lockdown.sql` enables RLS on every table and revokes all
+`anon`/`authenticated` privileges, fully closing off Supabase's
+auto-generated public REST API. Run it once, directly against your real
+Supabase project (SQL Editor, or `psql "$SUPABASE_DATABASE_URL" -f
+supabase/rls-lockdown.sql`) — **not** against local docker-compose
+Postgres, which doesn't have `anon`/`authenticated` roles and will error.
+
+This doesn't change how your Fastify backend behaves at all — it
+connects via the service-role connection string, which bypasses RLS by
+design. What it protects against is anyone holding your
+`SUPABASE_ANON_KEY` (which ships inside a mobile app bundle, so treat it
+as public) hitting Supabase's REST API directly and reading/writing your
+tables outside your own authorization logic entirely.
+
+If you ever want a client to read Supabase directly (e.g. a future
+public hostel-search page bypassing the API for speed), that needs an
+actual per-row policy added deliberately — the current setup is a
+deny-all, on purpose, since 100% of traffic goes through the Fastify API
+today.
+
 ## Running tests
 
 ```bash
@@ -82,12 +104,14 @@ want to go through Docker for this.)
 
 - `POST /api/v1/sync/checkins` — placeholder 501, offline batch check-in
   logic not yet implemented.
-- No login/registration routes exist yet — `scripts/seed.ts` mints JWTs
-  directly for local testing since token *issuance* wasn't in scope for
-  the steps built so far.
-- SMS/WhatsApp/FCM sending, OTP flow for cash payments, and the
-  `staff_assignments`-based Fastify routes for `/hostels/:hostelId/*`
-  beyond the `requirePropertyScope` middleware itself are not built yet.
+- Owner/custodian management routes — creating/editing hostels, rooms,
+  and beds. Right now `GET /api/v1/hostels` and `GET /api/v1/hostels/:id`
+  (public search/detail) exist, but the only way to actually populate a
+  hostel/room/bed is still `scripts/seed.ts`.
+- SMS/WhatsApp/FCM sending, and the OTP flow for cash payments, are not
+  built yet.
+- Production deployment — still runs locally via docker-compose only; no
+  deployment target chosen yet.
 
 ## Project layout
 

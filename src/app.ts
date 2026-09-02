@@ -13,6 +13,8 @@ import bookingRoutes from "./modules/bookings/routes.js";
 import paymentRoutes from "./modules/payments/routes.js";
 import syncRoutes from "./modules/sync/routes.js";
 import jobRoutes from "./modules/jobs/routes.js";
+import authRoutes from "./modules/auth/routes.js";
+import hostelRoutes from "./modules/hostels/routes.js";
 
 export async function buildApp() {
   const app = Fastify({
@@ -71,6 +73,8 @@ export async function buildApp() {
   await app.register(paymentRoutes, { prefix: "/api/v1/payments" });
   await app.register(syncRoutes, { prefix: "/api/v1/sync" });
   await app.register(jobRoutes, { prefix: "/api/v1/jobs" });
+  await app.register(authRoutes, { prefix: "/api/v1/auth" });
+  await app.register(hostelRoutes, { prefix: "/api/v1/hostels" });
 
   app.get("/health", async () => ({ status: "ok" }));
 

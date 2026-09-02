@@ -54,11 +54,15 @@ services:
     restart: unless-stopped
     env_file: .env
     environment:
-      APP_BASE_URL: http://app:8080
       NODE_ENV: development
       PORT: "8080"
       SUPABASE_DATABASE_URL: postgres://hostel_platform:hostel_platform_dev_password@postgres:5432/hostel_platform
       QSTASH_URL: http://qstash-dev:8080
+      # The address qstash-dev must use to call this container back —
+      # NOT localhost (that would resolve to qstash-dev's own container)
+      # and NOT the ngrok URL (that's only for Pesapal, an external
+      # party; qstash-dev reaches us over the docker network directly).
+      APP_BASE_URL: http://app:8080
       # These three come from qstash-dev's fixed dev credentials — see
       # .env.example for the values and where they're documented.
     ports:

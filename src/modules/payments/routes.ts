@@ -14,19 +14,19 @@ import {
 // either rather than trusting one casing and silently 400ing the other.
 const rawIpnSchema = z.object({
   orderTrackingId: z.string().min(1).optional(),
-                              OrderTrackingId: z.string().min(1).optional(),
-                              orderMerchantReference: z.string().min(1).optional(),
-                              OrderMerchantReference: z.string().min(1).optional(),
-                              orderNotificationType: z.string().optional(),
-                              OrderNotificationType: z.string().optional(),
+  OrderTrackingId: z.string().min(1).optional(),
+  orderMerchantReference: z.string().min(1).optional(),
+  OrderMerchantReference: z.string().min(1).optional(),
+  orderNotificationType: z.string().optional(),
+  OrderNotificationType: z.string().optional(),
 });
 
 function normalizeIpnPayload(raw: z.infer<typeof rawIpnSchema>) {
   const orderTrackingId = raw.orderTrackingId ?? raw.OrderTrackingId;
   const orderMerchantReference =
-  raw.orderMerchantReference ?? raw.OrderMerchantReference;
+    raw.orderMerchantReference ?? raw.OrderMerchantReference;
   const orderNotificationType =
-  raw.orderNotificationType ?? raw.OrderNotificationType;
+    raw.orderNotificationType ?? raw.OrderNotificationType;
 
   if (!orderTrackingId || !orderMerchantReference) return null;
 

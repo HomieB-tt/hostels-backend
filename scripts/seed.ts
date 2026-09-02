@@ -21,17 +21,17 @@ function mint(sub: string, role: string) {
 
 async function ensureUser(phone: string, name: string, role: "OWNER" | "CUSTODIAN" | "STUDENT") {
   const [existing] = await db
-  .select()
-  .from(schema.users)
-  .where(eq(schema.users.phone, phone))
-  .limit(1);
+    .select()
+    .from(schema.users)
+    .where(eq(schema.users.phone, phone))
+    .limit(1);
 
   if (existing) return existing;
 
   const [created] = await db
-  .insert(schema.users)
-  .values({ phone, name, passwordHash: "dev-seed-not-a-real-hash", role })
-  .returning();
+    .insert(schema.users)
+    .values({ phone, name, passwordHash: "dev-seed-not-a-real-hash", role })
+    .returning();
 
   return created!;
 }
@@ -42,21 +42,21 @@ async function main() {
   const student = await ensureUser("+256700000003", "Test Student", "STUDENT");
 
   let [hostel] = await db
-  .select()
-  .from(schema.hostels)
-  .where(eq(schema.hostels.ownerId, owner.id))
-  .limit(1);
+    .select()
+    .from(schema.hostels)
+    .where(eq(schema.hostels.ownerId, owner.id))
+    .limit(1);
 
   if (!hostel) {
     [hostel] = await db
-    .insert(schema.hostels)
-    .values({
-      ownerId: owner.id,
-      name: "Test Hostel",
-      address: "Wandegeya, Kampala",
-      university: "Makerere University",
-    })
-    .returning();
+      .insert(schema.hostels)
+      .values({
+        ownerId: owner.id,
+        name: "Test Hostel",
+        address: "Wandegeya, Kampala",
+        university: "Makerere University",
+      })
+      .returning();
 
     await db.insert(schema.staffAssignments).values([
       { userId: owner.id, hostelId: hostel!.id, roleAtProperty: "OWNER" },
@@ -70,19 +70,19 @@ async function main() {
   const runSuffix = Date.now().toString(36);
 
   const [room] = await db
-  .insert(schema.rooms)
-  .values({
-    hostelId: hostel!.id,
-    roomNumber: `A-${runSuffix}`,
-    roomType: "double",
-    pricePerBedPerSemester: "500000",
-  })
-  .returning();
+    .insert(schema.rooms)
+    .values({
+      hostelId: hostel!.id,
+      roomNumber: `A-${runSuffix}`,
+      roomType: "double",
+      pricePerBedPerSemester: "500000",
+    })
+    .returning();
 
   const [bed] = await db
-  .insert(schema.beds)
-  .values({ roomId: room!.id, bedLabel: "A", status: "AVAILABLE" })
-  .returning();
+    .insert(schema.beds)
+    .values({ roomId: room!.id, bedLabel: "A", status: "AVAILABLE" })
+    .returning();
 
   const studentToken = mint(student.id, "STUDENT");
   const custodianToken = mint(custodian.id, "CUSTODIAN");
@@ -99,7 +99,7 @@ async function main() {
 
   console.log("\n=== Try it ===");
   console.log(`
-  curl -i -X POST http://localhost:${env.PORT}/api/v1/bookings/hold \\
+curl -i -X POST http://localhost:${env.PORT}/api/v1/bookings/hold \\
   -H "Authorization: Bearer ${studentToken}" \\
   -H "X-Client-Platform: mobile_app" \\
   -H "Content-Type: application/json" \\
@@ -110,7 +110,7 @@ async function main() {
     "stayEnd": "2026-12-15",
     "totalAmount": "500000.00"
   }'
-  `);
+`);
 
   process.exit(0);
 }

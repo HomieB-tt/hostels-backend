@@ -33,13 +33,26 @@ const dbState = {
 };
 
 vi.mock("../db/index.js", () => {
-  const chain = {
+  // Explicit interface breaks the circularity that a self-referential
+  // `const chain = { select: () => chain, ... }` creates: without an
+  // annotation, TypeScript has to infer chain's type FROM an initializer
+  // that references chain itself — the classic TS7022 "implicitly has
+  // type 'any' because it is referenced directly or indirectly in its
+  // own initializer" error under noImplicitAny (part of strict: true).
+  interface MockChain {
+    select: () => MockChain;
+    from: () => MockChain;
+    where: () => MockChain;
+    limit: () => Promise<{ id: string }[]>;
+    for: () => MockChain;
+  }
+
+  const chain: MockChain = {
     select: () => chain,
     from: () => chain,
     where: () => chain,
     limit: () => Promise.resolve(dbState.processedWebhook ? [dbState.processedWebhook] : []),
     for: () => chain,
-    then: undefined,
   };
 
   return {

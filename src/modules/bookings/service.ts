@@ -1,4 +1,4 @@
-import { and, eq, sql } from "drizzle-orm";
+import { and, eq, sql, desc } from "drizzle-orm";
 import { db, schema } from "../../db/index.js";
 import { writeAuditLog } from "../../utils/audit.js";
 import { scheduleAutoReleaseHold } from "../jobs/qstash-client.js";
@@ -129,5 +129,60 @@ export async function releaseExpiredHold(bookingId: string) {
     });
 
     return { released: true as const };
+  });
+}
+
+/**
+ * Parses Postgres's `[start,end)` daterange text representation into
+ * plain ISO date strings — the raw bracket syntax is Postgres-specific
+ * and shouldn't leak through the API for a frontend to have to parse.
+ */
+function parseStayPeriod(raw: string): { stayStart: string; stayEnd: string } | null {
+  const match = raw.match(/^[\[(](\d{4}-\d{2}-\d{2}),(\d{4}-\d{2}-\d{2})[\])]$/);
+  if (!match) return null;
+  return { stayStart: match[1]!, stayEnd: match[2]! };
+}
+
+/**
+ * "My bookings" — every booking the authenticated student has made,
+ * newest first, with just enough joined context (hostel name, room
+ * number, bed label) to render a useful list without a second round
+ * trip per booking.
+ */
+export async function listStudentBookings(
+  studentId: string,
+  params: { page: number; limit: number },
+) {
+  const offset = (params.page - 1) * params.limit;
+
+  const rows = await db
+    .select({
+      id: schema.bookings.id,
+      status: schema.bookings.status,
+      semester: schema.bookings.semester,
+      stayPeriod: sql<string>`${schema.bookings.stayPeriod}::text`,
+      totalAmount: schema.bookings.totalAmount,
+      amountPaid: schema.bookings.amountPaid,
+      dueBalance: schema.bookings.dueBalance,
+      holdExpiresAt: schema.bookings.holdExpiresAt,
+      confirmedAt: schema.bookings.confirmedAt,
+      createdAt: schema.bookings.createdAt,
+      bedLabel: schema.beds.bedLabel,
+      roomNumber: schema.rooms.roomNumber,
+      hostelId: schema.hostels.id,
+      hostelName: schema.hostels.name,
+    })
+    .from(schema.bookings)
+    .innerJoin(schema.beds, eq(schema.beds.id, schema.bookings.bedId))
+    .innerJoin(schema.rooms, eq(schema.rooms.id, schema.beds.roomId))
+    .innerJoin(schema.hostels, eq(schema.hostels.id, schema.rooms.hostelId))
+    .where(eq(schema.bookings.studentId, studentId))
+    .orderBy(desc(schema.bookings.createdAt))
+    .limit(params.limit)
+    .offset(offset);
+
+  return rows.map((row) => {
+    const { stayPeriod, ...rest } = row;
+    return { ...rest, ...(parseStayPeriod(stayPeriod) ?? { stayStart: null, stayEnd: null }) };
   });
 }

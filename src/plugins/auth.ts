@@ -3,8 +3,8 @@ import fastifyJwt from "@fastify/jwt";
 import type { FastifyInstance, FastifyRequest, FastifyReply } from "fastify";
 import { env } from "../env.js";
 
-type ClientPlatform = "mobile_app" | "web_dashboard";
-type UserRole = "STUDENT" | "CUSTODIAN" | "OWNER" | "ADMIN";
+export type ClientPlatform = "mobile_app" | "web_dashboard";
+export type UserRole = "STUDENT" | "CUSTODIAN" | "OWNER" | "ADMIN";
 
 export interface AuthedUser {
   id: string;
@@ -25,8 +25,11 @@ declare module "@fastify/jwt" {
   }
 }
 
-// Roles hard-restricted to a single platform, per spec §1.
-const ROLE_PLATFORM_LOCK: Record<UserRole, ClientPlatform | null> = {
+// Roles hard-restricted to a single platform, per spec §1. Exported so
+// modules/auth (register/login/refresh) enforces the exact same mapping
+// at token-issuance time as this plugin enforces at request time —
+// one source of truth instead of two copies that could drift apart.
+export const ROLE_PLATFORM_LOCK: Record<UserRole, ClientPlatform | null> = {
   STUDENT: "mobile_app",
   CUSTODIAN: "web_dashboard",
   OWNER: "web_dashboard",

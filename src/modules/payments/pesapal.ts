@@ -47,7 +47,13 @@ async function getAccessToken(): Promise<string> {
 
   const data = (await res.json()) as PesapalTokenResponse;
   if (!data.token) {
-    throw new Error("Pesapal auth response missing token");
+    // Surface Pesapal's actual error payload (e.g. the code/message under
+    // `data.error`) instead of a bare "missing token" — this is almost
+    // always a wrong/mismatched PESAPAL_CONSUMER_KEY/SECRET pair, and the
+    // response body says exactly why.
+    throw new Error(
+      `Pesapal auth response missing token — response body: ${JSON.stringify(data)}`,
+    );
   }
 
   // Pesapal tokens are short-lived (~5 min); cache conservatively.
