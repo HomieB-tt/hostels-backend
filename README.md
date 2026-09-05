@@ -1,8 +1,7 @@
 # hostel-platform-backend
 
 Fastify + TypeScript backend for the Ugandan university hostel search,
-booking, and management platform. See `hostel-platform-backend-spec.md`
-for the full spec this was built against.
+booking, and management platform.
 
 ## Quickstart (docker-compose)
 
