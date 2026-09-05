@@ -338,6 +338,36 @@ export const savedItems = pgTable(
 );
 
 // ---------------------------------------------------------------------------
+// Supporting table: checkins (offline custodian sync, spec §4). `id` is
+// deliberately client-generated with NO defaultRandom() — the client
+// creates it before ever going offline, and that same id is what makes a
+// replayed sync request idempotent (same id = same record, not a new one).
+// ---------------------------------------------------------------------------
+
+export const checkins = pgTable(
+  "checkins",
+  {
+    id: uuid("id").primaryKey(),
+    bookingId: uuid("booking_id")
+      .notNull()
+      .references(() => bookings.id, { onDelete: "restrict" }),
+    custodianId: uuid("custodian_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "restrict" }),
+    // The client's recorded event time — often earlier than syncedAt,
+    // since this may have sat in an offline queue before reaching us.
+    checkedInAt: timestamp("checked_in_at", { withTimezone: true }).notNull(),
+    syncedAt: timestamp("synced_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+  },
+  (t) => ({
+    bookingIdx: index("checkins_booking_idx").on(t.bookingId),
+    custodianIdx: index("checkins_custodian_idx").on(t.custodianId),
+  }),
+);
+
+// ---------------------------------------------------------------------------
 // Relations
 // ---------------------------------------------------------------------------
 

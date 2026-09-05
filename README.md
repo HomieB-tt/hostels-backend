@@ -102,12 +102,6 @@ want to go through Docker for this.)
 
 ## What's stubbed / not yet built
 
-- `POST /api/v1/sync/checkins` — placeholder 501, offline batch check-in
-  logic not yet implemented.
-- Owner/custodian management routes — creating/editing hostels, rooms,
-  and beds. Right now `GET /api/v1/hostels` and `GET /api/v1/hostels/:id`
-  (public search/detail) exist, but the only way to actually populate a
-  hostel/room/bed is still `scripts/seed.ts`.
 - SMS/WhatsApp/FCM sending, and the OTP flow for cash payments, are not
   built yet.
 - Production deployment — still runs locally via docker-compose only; no

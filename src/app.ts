@@ -15,6 +15,7 @@ import syncRoutes from "./modules/sync/routes.js";
 import jobRoutes from "./modules/jobs/routes.js";
 import authRoutes from "./modules/auth/routes.js";
 import hostelRoutes from "./modules/hostels/routes.js";
+import hostelManagementRoutes from "./modules/hostels/management.routes.js";
 
 export async function buildApp() {
   const app = Fastify({
@@ -75,6 +76,7 @@ export async function buildApp() {
   await app.register(jobRoutes, { prefix: "/api/v1/jobs" });
   await app.register(authRoutes, { prefix: "/api/v1/auth" });
   await app.register(hostelRoutes, { prefix: "/api/v1/hostels" });
+  await app.register(hostelManagementRoutes, { prefix: "/api/v1/hostels" });
 
   app.get("/health", async () => ({ status: "ok" }));
 

@@ -4,6 +4,7 @@ import { hashPassword, verifyPassword } from "./password.js";
 import { ROLE_PLATFORM_LOCK } from "../../plugins/auth.js";
 import type { ClientPlatform, UserRole } from "../../plugins/auth.js";
 import { writeAuditLog } from "../../utils/audit.js";
+import { isUniqueViolation } from "../../utils/pg-errors.js";
 
 export class PlatformRoleMismatchError extends Error {
   constructor(role: UserRole, requiredPlatform: ClientPlatform) {
@@ -87,14 +88,6 @@ export async function registerUser(params: {
     if (isUniqueViolation(err)) throw new PhoneAlreadyRegisteredError();
     throw err;
   }
-}
-
-/** Detects a Postgres unique-violation error (code 23505) from the
- * `postgres` driver without importing its error class directly — avoids
- * a hard dependency on postgres.js's internal error shape beyond the
- * one field that matters. */
-function isUniqueViolation(err: unknown): boolean {
-  return typeof err === "object" && err !== null && "code" in err && err.code === "23505";
 }
 
 export async function loginUser(params: {
